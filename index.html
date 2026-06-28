@@ -1116,7 +1116,7 @@ class Component extends DCLogic {
     f.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
     document.body.appendChild(f);
     const d=f.contentWindow.document; d.open(); d.write(html); d.close();
-    setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(()=>f.remove(), 1200); }, 500);
+    setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(()=>f.remove(), 1200); }, 850);
   }
   dlBlob(name, blob){
     const url=URL.createObjectURL(blob);
@@ -1128,34 +1128,47 @@ class Component extends DCLogic {
     const groups=this.groups(true);
     let body="";
     groups.forEach(g=>{
-      body += `<h2 class="mh">${this.esc(g.title)}</h2>`;
       g.items.forEach(it=>{
         const p=it.post;
-        const img = p.hasMedia ? `<div class="media"><img src="${this.esc(this.imgPath(p,it.num))}" onerror="this.parentNode.innerHTML='<div class=ph>${this.esc(this.fileName(p.monthIndex,it.num))}</div>'"/></div>` : "";
-        body += `<div class="post">
-          <div class="hd"><img class="av" src="${this.esc(this.state.photo)}"/><div><div class="nm">${this.esc(this.BRAD_NAME)}</div><div class="tl">${this.esc(this.BRAD_TITLE)}</div><div class="mt">#${it.num} · ${this.esc(p.time)}</div></div></div>
-          <div class="bd">${this.fmtRich(p.body)}</div>
-          ${img}
-          <div class="ft">${this.fmt(p.likes)} reactions · ${this.fmt(p.comments)} comments · ${this.fmt(p.reposts)} reposts</div>
+        const gEff=this.gfxEff(p);
+        let media="";
+        if(gEff){
+          const W=460, ar=this.aspectOf(gEff.size), parts=ar.split("/").map(Number);
+          const H=Math.round(W*parts[1]/parts[0]);
+          media=`<div class="media" style="position:relative;width:${W}px;height:${H}px;">${this.gfxHtml(gEff)}</div>`;
+        } else if(p.image){
+          media=`<div class="media"><img src="${this.esc(p.image)}"/></div>`;
+        } else if(p.hasMedia){
+          media=`<div class="media"><div class="ph">${this.esc(this.fileName(p.monthIndex,it.num))}</div></div>`;
+        }
+        body += `<div class="page">
+          <div class="post">
+            <div class="eyebrow">${this.esc(g.title)} · Post #${it.num}</div>
+            <div class="hd"><img class="av" src="${this.esc(this.state.photo)}"/><div><div class="nm">${this.esc(this.BRAD_NAME)}</div><div class="tl">${this.esc(this.BRAD_TITLE)}</div><div class="mt">${this.esc(p.time)} · 🌐</div></div></div>
+            <div class="bd">${this.fmtRich(p.body)}</div>
+            ${media}
+            <div class="ft">${this.fmt(p.likes)} reactions · ${this.fmt(p.comments)} comments · ${this.fmt(p.reposts)} reposts</div>
+          </div>
         </div>`;
       });
     });
     const html=`<!doctype html><html><head><meta charset="utf-8"><title>Connetic — Brad Zapp posts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Roboto:wght@700;800;900&display=swap" rel="stylesheet">
     <style>
-      *{box-sizing:border-box;font-family:-apple-system,Segoe UI,Roboto,sans-serif;}
-      body{margin:0;padding:28px;color:#1d2226;background:#fff;}
-      h1{font-size:22px;margin:0 0 4px;} .sub{color:#8a8a86;font-size:13px;margin-bottom:18px;}
-      .mh{font-size:17px;margin:26px 0 12px;border-bottom:2px solid #1e4a85;padding-bottom:5px;color:#0e2236;}
-      .post{border:1px solid #e0dfdb;border-radius:10px;overflow:hidden;margin-bottom:16px;page-break-inside:avoid;}
-      .hd{display:flex;gap:10px;padding:13px 15px 0;} .av{width:46px;height:46px;border-radius:50%;object-fit:cover;}
-      .nm{font-weight:700;font-size:14px;} .tl{font-size:11.5px;color:#5e5e5a;} .mt{font-size:11px;color:#9a9a95;}
-      .bd{padding:11px 15px;font-size:13.5px;line-height:1.5;white-space:pre-wrap;}
-      .media img{width:100%;display:block;} .ph{background:linear-gradient(135deg,#0e2236,#1e6f7e);color:#fff;font-family:monospace;font-size:12px;padding:60px 16px;text-align:center;word-break:break-all;}
-      .ft{padding:9px 15px;font-size:11.5px;color:#8a8a86;border-top:1px solid #f0efec;}
-      @page{margin:14mm;}
+      *{box-sizing:border-box;font-family:-apple-system,Segoe UI,Roboto,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      body{margin:0;padding:0;color:#1d2226;background:#fff;}
+      .page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;page-break-after:always;break-after:page;}
+      .page:last-child{page-break-after:auto;break-after:auto;}
+      .post{width:460px;max-width:100%;border:1px solid #e0dfdb;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+      .eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#b0b0ab;padding:14px 16px 0;}
+      .hd{display:flex;gap:10px;padding:8px 16px 0;} .av{width:48px;height:48px;border-radius:50%;object-fit:cover;}
+      .nm{font-weight:700;font-size:15px;} .tl{font-size:12px;color:#5e5e5a;} .mt{font-size:11.5px;color:#9a9a95;margin-top:1px;}
+      .bd{padding:12px 16px;font-size:14px;line-height:1.5;white-space:pre-wrap;}
+      .media{width:100%;} .media img{width:100%;display:block;}
+      .ph{background:linear-gradient(135deg,#0e2236,#1e6f7e);color:#fff;font-family:monospace;font-size:12px;padding:60px 16px;text-align:center;word-break:break-all;}
+      .ft{padding:11px 16px;font-size:12px;color:#8a8a86;border-top:1px solid #f0efec;}
+      @page{margin:0;}
     </style></head><body>
-      <h1>Connetic — Founder-Led Posts</h1>
-      <div class="sub">Brad Zapp · ${this.esc(this.BRAD_TITLE)} · exported ${new Date().toLocaleDateString()}</div>
       ${body}
     </body></html>`;
     this.printDoc(html);
